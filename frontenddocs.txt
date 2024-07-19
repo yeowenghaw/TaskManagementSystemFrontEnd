@@ -1,0 +1,43 @@
+initial steps for creating a sveltekit project
+
+npm create svelte@latest backend
+cd backend
+npm install
+npm run dev
+
+options
+Skeleton Project
+No
+"select no options just press enter"
+
+installed packages from base svelte file
+├── @sveltejs/adapter-auto@3.2.2
+├── @sveltejs/kit@2.5.18
+├── @sveltejs/vite-plugin-svelte@3.1.1
+├── svelte@4.2.18
+└── vite@5.3.4
+
+@sveltejs/adapter-auto@3.2.2
+	https://www.npmjs.com/package/@sveltejs/adapter-auto
+	Automatically chooses the SvelteKit adapter for your current environment, if possible. Will automatically 	install the correct adapter for the environment that is being used when the application is deployed, for example:
+	@sveltejs/adapter-cloudflare for Cloudflare Pages
+	@sveltejs/adapter-netlify for Netlify
+	@sveltejs/adapter-vercel for Vercel
+	svelte-adapter-azure-swa for Azure Static Web Apps
+	svelte-kit-sst for AWS via SST
+	@sveltejs/adapter-node for Google Cloud Run
+
+
+@sveltejs/kit@2.5.18
+	https://www.npmjs.com/package/@sveltejs/kit
+	This is the SvelteKit framework and CLI. Svelte kit uses the svelte framework, with routing already handled
+
+@sveltejs/vite-plugin-svelte@3.1.1
+	https://www.npmjs.com/package/@sveltejs/vite-plugin-svelte
+	The official Svelte plugin for Vite. Ties in svelte and vite together
+
+svelte@4.2.18
+	Svelte, front end frame work that is being used
+
+vite@5.3.4
+	Vite, no-bundle build tool. code is served as individual modules directly to the browser, makes reloading faster
