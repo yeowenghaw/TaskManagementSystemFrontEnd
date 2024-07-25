@@ -1,10 +1,5 @@
-import { fail } from "@sveltejs/kit";
+import { fail, redirect } from "@sveltejs/kit";
 import axios from "axios";
-
-// can access cookies from here
-export async function load({ cookies }) {
-  // const sessionid = cookies.get('sessionid');
-}
 
 const formDataToObject = formData => {
   const object = {};
@@ -16,8 +11,10 @@ const formDataToObject = formData => {
 
 export const actions = {
   login: async ({ cookies, request }) => {
+    var success = false;
     try {
       const data = await request.formData();
+
       const response = await axios({
         method: "post",
         url: "http://localhost:3000/api/v1/users/login",
@@ -40,9 +37,11 @@ export const actions = {
         }
       }
       cookies.set("token", tokenValue, { path: "/" });
-      return response.data;
+      success = true;
     } catch (error) {
       return error.response.data;
     }
+    // redirection is done over here because redirecting will trigger the catch error block, 
+    throw redirect(303, "/");
   }
 };

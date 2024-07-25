@@ -1,10 +1,18 @@
 <script>
+  export let data;
   let isloggedin = false;
   let isadmin = false;
+  $: {
+    if ("token" in data) {
+      isloggedin = true;
+    } else {
+      isloggedin = false;
+    }
+  }
 </script>
 
 <div class="navbar">
-  <a href="/">Home</a>
+  <a href="/login">Home</a>
   {#if isloggedin === true}
     <a href="/profile">Profile</a>
     {#if isadmin === true}
@@ -18,11 +26,6 @@
 
 <style>
   /* Basic styling for the navigation bar */
-  body {
-    font-family: Arial, sans-serif;
-    margin: 0;
-    padding: 0;
-  }
   .navbar {
     background-color: #333;
     overflow: hidden;
