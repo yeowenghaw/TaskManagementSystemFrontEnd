@@ -1,3 +1,4 @@
+import { fail } from "@sveltejs/kit";
 import axios from "axios";
 
 // can access cookies from here
@@ -22,36 +23,26 @@ export const actions = {
         url: "http://localhost:3000/api/v1/users/login",
         data: formDataToObject(data)
       });
-      if (response.status == 200) {
-        const receivingcookies = response.headers["set-cookie"];
-        // extracting only token information from cookie
+      const receivingcookies = response.headers["set-cookie"];
+      // extracting only token information from cookie
 
-        const cookieString = JSON.stringify(receivingcookies);
+      const cookieString = JSON.stringify(receivingcookies);
 
-        // Split by '; ' to separate cookie attributes
-        const cookieParts = cookieString.split("; ");
+      // Split by '; ' to separate cookie attributes
+      const cookieParts = cookieString.split("; ");
 
-        // Find the part that starts with '["token='
-        let tokenValue = "";
-        for (let part of cookieParts) {
-          if (part.startsWith('["token=')) {
-            tokenValue = part.substring(8); // Remove 'token=' prefix
-            break;
-          }
+      // Find the part that starts with '["token='
+      let tokenValue = "";
+      for (let part of cookieParts) {
+        if (part.startsWith('["token=')) {
+          tokenValue = part.substring(8); // Remove 'token=' prefix
+          break;
         }
-        cookies.set("token", tokenValue, { path: "/" });
-      } else {
-        // reject log in
-        console.log(response.error);
       }
+      cookies.set("token", tokenValue, { path: "/" });
+      return response.data;
     } catch (error) {
-      if (error.response) {
-        console.error("Server responded with:", error.response.status);
-      } else if (error.request) {
-        console.error("No response received");
-      } else {
-        console.error("Error:", error.message);
-      }
+      return error.response.data;
     }
   }
 };
