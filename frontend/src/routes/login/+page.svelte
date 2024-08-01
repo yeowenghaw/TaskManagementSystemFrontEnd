@@ -14,7 +14,7 @@
     try {
       const response = await axios({
         method: "post",
-        url: "http://localhost:3000/api/v1/login",
+        url: "http://localhost:3000/api/v1/auth/login",
         data: {
           username: username,
           password: password

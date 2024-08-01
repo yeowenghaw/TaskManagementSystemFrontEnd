@@ -2,7 +2,8 @@
   export let data;
   import axios from "axios";
   import MultiSelect from "svelte-multiselect";
-  import { beforeNavigate, afterNavigate } from "$app/navigation";
+  import { goto } from "$app/navigation";
+  import { afterUpdate } from "svelte";
 
   // Reactive statement for debugging and handling token
   $: {
@@ -57,26 +58,9 @@
         //errormessage = response.data.message;
       }
     } catch (error) {
-      // if (error.response.status === "401") {
-      //   try {
-      //     const response = await axios({
-      //       method: "post",
-      //       url: "http://localhost:3000/api/v1/logout",
-      //       withCredentials: true
-      //     });
-
-      //     console.log(response);
-
-      //     if (response.status === 200) {
-      //       // Check for successful response status
-      //       goto("/login"); // Use relative path for better consistency
-      //     } else {
-      //       console.error("Logout failed:", response.status, response.statusText);
-      //     }
-      //   } catch (error) {
-      //     console.error("Error during logout:", error.response || error.message);
-      //   }
-      // }
+      if (error.response.status === "401") {
+        goto("/");
+      }
       errormessage = error.response.data.message;
     }
   };
@@ -93,6 +77,12 @@
         groups: editinggroup
       }
     });
+
+    if (editingdisabled === 0) {
+      editingdisabled = false;
+    } else if (editingdisabled === 1) {
+      editingdisabled = true;
+    }
 
     try {
       const response = await axios({
@@ -117,26 +107,9 @@
         //errormessage = response.data.message;
       }
     } catch (error) {
-      // if (error.response.status === "401") {
-      //   try {
-      //     const response = await axios({
-      //       method: "post",
-      //       url: "http://localhost:3000/api/v1/logout",
-      //       withCredentials: true
-      //     });
-
-      //     console.log(response);
-
-      //     if (response.status === 200) {
-      //       // Check for successful response status
-      //       goto("/login"); // Use relative path for better consistency
-      //     } else {
-      //       console.error("Logout failed:", response.status, response.statusText);
-      //     }
-      //   } catch (error) {
-      //     console.error("Error during logout:", error.response || error.message);
-      //   }
-      // }
+      if (error.response.status === "401") {
+        goto("/");
+      }
       errormessage = error.response.data.message;
     }
   };
@@ -165,9 +138,43 @@
         //errormessage = response.data.message;
       }
     } catch (error) {
+      if (error.response.status === "401") {
+        goto("/");
+      }
       errormessage = error.response.data.message;
     }
   };
+
+  const handleToken = async () => {
+    try {
+      const response = await axios({
+        method: "post",
+        url: "http://localhost:3000/api/v1/auth/authenticate",
+        withCredentials: true
+      });
+      return response;
+    } catch (error) {
+      //console.error("Error during authentication:", error.response || error.message);
+      console.log("user not authorized");
+    }
+  };
+
+  afterUpdate(async () => {
+    console.log("After update has been called");
+    const data = await handleToken();
+    //console.log(data);
+    if (data) {
+      if (data.status === 200) {
+        if (data.data.message !== "Authorized admin") {
+          goto("/");
+        }
+      } else {
+        goto("/");
+      }
+    } else {
+      goto("/");
+    }
+  });
 
   let newusername;
   let newpassword;

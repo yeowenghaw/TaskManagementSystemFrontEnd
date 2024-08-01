@@ -18,7 +18,7 @@ export async function load({ cookies }) {
 
     const usergroupresponse = await axios({
       method: "get",
-      url: `http://localhost:3000/api/v1/usergroups`,
+      url: `http://localhost:3000/api/v1/groups/usergroups`,
       headers: {
         Cookie: token
       },
