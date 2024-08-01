@@ -7,23 +7,6 @@
 
   onMount(() => {
     console.log("Page has been navigated to!");
-    // try {
-    //   const response = await axios({
-    //     method: "post",
-    //     url: `http://localhost:3000/api/v1/authenticate`,
-    //     headers: {
-    //       Cookie: token
-    //     },
-    //     withCredentials: true
-    //   });
-    //   if (response.status === 200) {
-    //     authorisedsuccess = true;
-    //   }
-    // } catch (error) {
-    //   console.log(error);
-    //   return {};
-    // }
-    // Call your function here
   });
 
   let uservalue = "";
@@ -93,6 +76,12 @@
       errormessage = error.response.data.message;
     }
   };
+
+  // Function to handle form submission
+  const startEdit = async event => {
+    editing = true;
+    temporaryemail = emailvalue;
+  };
 </script>
 
 {#if errormessage.length > 0}
@@ -112,7 +101,7 @@
           <button type="submit" class="profile-button">Save</button>
           <button
             on:click={() => {
-              editing = !editing;
+              editing = false;
             }}
             class="profile-button">Cancel</button
           >
@@ -122,13 +111,7 @@
         <p>{emailvalue}</p>
         <h4>Password</h4>
         <p>********</p>
-        <button
-          type="button"
-          class="profile-button"
-          on:click={() => {
-            editing = !editing;
-          }}>Edit</button
-        >
+        <button type="button" class="profile-button" on:click={startEdit}>Edit</button>
       {/if}
     </div>
   </div>
