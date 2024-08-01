@@ -4,25 +4,22 @@
   import MultiSelect from "svelte-multiselect";
   import { beforeNavigate, afterNavigate } from "$app/navigation";
 
-  // // Before navigate hook
-  // beforeNavigate((to, from) => {
-  //   console.log("before navigate called");
-  //   //console.log(`Navigating from ${from.path} to ${to.path}`);
-  //   //console.log(data);
-  // });
-
-  // // After navigate hook
-  // afterNavigate((to, from) => {
-  //   console.log("after navigate called");
-  //   //console.log(`Navigated to ${to.path} from ${from.path}`);
-  //   //console.log(data);
-  //   // Example: Track page views with analytics
-  //   // trackPageView(to.path);
-  // });
-
   // Reactive statement for debugging and handling token
   $: {
   }
+
+  const setEditingUser = edituser => {
+    editingusername = edituser.username;
+    editingpassword = "";
+    editingemail = edituser.email;
+    editingdisabled = edituser.disabled;
+    originaleditinggroup = [];
+    data.usergroupdata.data.forEach(element => {
+      if (editingusername === element.username) {
+        originaleditinggroup.push(element.groupname);
+      }
+    });
+  };
 
   // Function to handle form submission
   const handleCreateNewUser = async event => {
@@ -144,11 +141,41 @@
     }
   };
 
+  // Function to handle form submission
+  const handleCreateGroup = async event => {
+    console.log("Creating group: " + createnewgroup);
+    console.log({
+      data: {
+        groupname: createnewgroup
+      }
+    });
+
+    try {
+      const response = await axios({
+        method: "post",
+        url: "http://localhost:3000/api/v1/groups",
+        data: {
+          groupname: createnewgroup
+        },
+        withCredentials: true
+      });
+      if (response.status === 200) {
+        createnewgroup = "";
+        window.location.reload();
+        //errormessage = response.data.message;
+      }
+    } catch (error) {
+      errormessage = error.response.data.message;
+    }
+  };
+
   let newusername;
   let newpassword;
   let newemail;
   let newdisabled = false;
   let newgroup = [];
+
+  let createnewgroup = "";
 
   let editingusername = "";
   let editingpassword;
@@ -158,19 +185,6 @@
   let originaleditinggroup = [];
 
   let errormessage = "";
-
-  const setEditingUser = edituser => {
-    editingusername = edituser.username;
-    editingpassword = "";
-    editingemail = edituser.email;
-    editingdisabled = edituser.disabled;
-    originaleditinggroup = [];
-    data.usergroupdata.data.forEach(element => {
-      if (editingusername === element.username) {
-        originaleditinggroup.push(element.groupname);
-      }
-    });
-  };
 </script>
 
 {#if errormessage.length > 0}
@@ -179,6 +193,10 @@
 
 <h1>User Management</h1>
 {#if data.userdata || data.usergroupdata}
+  <form>
+    <input type="text" bind:value={createnewgroup} />
+    <button on:click={handleCreateGroup}>Create Group</button>
+  </form>
   <table id="userTable">
     <thead>
       <tr>
