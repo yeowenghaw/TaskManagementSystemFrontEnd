@@ -1,25 +1,50 @@
 <script>
-  export let form;
-  $: {
-    if (form) {
-      //console.log(form);
-      if (form.success === true) {
-        console.log("user logged in successfully");
-      } else {
-        console.log("unsuccessful login");
-        console.log(form.message);
-      }
+  import axios from "axios";
+  import { goto } from "$app/navigation";
+
+  let username = "";
+  let password = "";
+  let errormessage = "";
+
+  // Function to handle form submission
+  const handleSubmit = async event => {
+    event.preventDefault(); // Prevent default form submission
+    var success = false;
+    console.log("attempting to log in");
+    try {
+      const response = await axios({
+        method: "post",
+        url: "http://localhost:3000/api/v1/login",
+        data: {
+          username: username,
+          password: password
+        },
+        withCredentials: true
+      });
+
+      console.log(response);
+      success = true;
+    } catch (error) {
+      errormessage = error.response.data.message;
+      //alert(error.response.data.message);
     }
-  }
+    // redirection is done over here because redirecting will trigger the catch error block,
+    if (success) {
+      goto("/"); // Redirect to home or desired route
+    }
+  };
 </script>
 
+{#if errormessage.length > 0}
+  <h2>{errormessage}</h2>
+{/if}
 <div class="login">
   <div class="login-container">
     <h2>Login</h2>
-    <form action="?/login" method="post">
-      <input type="text" id="username" name="username" placeholder="Username" required />
+    <form on:submit|preventDefault={handleSubmit}>
+      <input type="text" bind:value={username} placeholder="Username" required />
       <br />
-      <input type="password" id="password" name="password" placeholder="Password" required />
+      <input type="password" bind:value={password} placeholder="Password" required />
       <br />
       <input type="submit" value="Login" />
     </form>
