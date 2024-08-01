@@ -24,6 +24,7 @@
 
   // Function to handle form submission
   const handleCreateNewUser = async event => {
+    // event.preventDefault();
     console.log("Creating new user");
     console.log({
       data: {
@@ -295,8 +296,8 @@
 
       <tr>
         <td><input type="text" bind:value={newusername} /></td>
-        <td><input type="text" bind:value={newpassword} /></td>
-        <td><input type="password" bind:value={newemail} /></td>
+        <td><input type="text" bind:value={newemail} /></td>
+        <td><input type="password" bind:value={newpassword} /></td>
         <td>
           <MultiSelect options={data.groupdata.data.map(item => item.groupname)} placeholder="Select Groups" bind:value={newgroup} style="width: 200px;" />
         </td>

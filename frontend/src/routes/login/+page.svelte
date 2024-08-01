@@ -1,6 +1,7 @@
 <script>
   import axios from "axios";
   import { goto } from "$app/navigation";
+  import { afterUpdate } from "svelte";
 
   let username = "";
   let password = "";
@@ -33,6 +34,32 @@
       goto("/"); // Redirect to home or desired route
     }
   };
+
+  const handleToken = async () => {
+    try {
+      const response = await axios({
+        method: "post",
+        url: "http://localhost:3000/api/v1/auth/authenticate",
+        withCredentials: true
+      });
+      return response;
+    } catch (error) {
+      //console.error("Error during authentication:", error.response || error.message);
+      console.log("user not authorized");
+    }
+  };
+
+  afterUpdate(async () => {
+    console.log("After update has been called");
+    const data = await handleToken();
+    //console.log(data);
+    if (data) {
+      if (data.status === 200) {
+        goto("/");
+      }
+    } else {
+    }
+  });
 </script>
 
 {#if errormessage.length > 0}
