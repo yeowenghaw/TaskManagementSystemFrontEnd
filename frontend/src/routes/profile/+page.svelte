@@ -156,11 +156,6 @@
     max-width: 300px; /* Optional: set a max-width for better control */
   }
 
-  .profile-form label {
-    margin-right: 10px;
-    white-space: nowrap;
-  }
-
   .profile-container input[type="text"],
   .profile-container input[type="password"] {
     width: auto; /* Allow input to shrink to fit */

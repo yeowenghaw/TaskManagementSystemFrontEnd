@@ -7,13 +7,19 @@
 
   // Reactive statement for debugging and handling token
   $: {
+    console.log("value of editingdisabled: " + editingdisabled);
   }
 
   const setEditingUser = edituser => {
     editingusername = edituser.username;
     editingpassword = "";
     editingemail = edituser.email;
-    editingdisabled = edituser.disabled;
+    console.log("value of editing disabled: " + editingdisabled);
+    if (edituser.disabled) {
+      editingdisabled = "disabled";
+    } else {
+      editingdisabled = "enabled";
+    }
     originaleditinggroup = [];
     data.usergroupdata.data.forEach(element => {
       if (editingusername === element.username) {
@@ -24,14 +30,18 @@
 
   // Function to handle form submission
   const handleCreateNewUser = async event => {
-    // event.preventDefault();
+    let newenabledvalue = false;
+    console.log("value of editing disabled: " + newdisabled);
+    if (newdisabled === "disabled") {
+      newenabledvalue = true;
+    }
     console.log("Creating new user");
     console.log({
       data: {
         username: newusername,
         password: newpassword,
         email: newemail,
-        disabled: newdisabled,
+        disabled: newenabledvalue,
         groups: newgroup
       }
     });
@@ -44,7 +54,7 @@
           username: newusername,
           password: newpassword,
           email: newemail,
-          disabled: newdisabled,
+          disabled: newenabledvalue,
           groups: newgroup
         },
         withCredentials: true
@@ -68,22 +78,22 @@
 
   // Function to handle form submission
   const handleUpdateUser = async event => {
+    let updatingenabledvalue = false;
+    console.log("value of editing disabled: " + editingdisabled);
+    if (editingdisabled === "disabled") {
+      updatingenabledvalue = true;
+    }
+
     console.log("Updating user: " + editingusername);
     console.log({
       data: {
         username: editingusername,
         password: editingpassword,
         email: editingemail,
-        disabled: editingdisabled,
+        disabled: updatingenabledvalue,
         groups: editinggroup
       }
     });
-
-    if (editingdisabled === 0) {
-      editingdisabled = false;
-    } else if (editingdisabled === 1) {
-      editingdisabled = true;
-    }
 
     try {
       const response = await axios({
@@ -93,7 +103,7 @@
           username: editingusername,
           password: editingpassword,
           email: editingemail,
-          disabled: editingdisabled,
+          disabled: updatingenabledvalue,
           groups: editinggroup
         },
         withCredentials: true
@@ -102,7 +112,7 @@
         editingusername = "";
         editingpassword = "";
         editingemail = "";
-        editingdisabled = false;
+        editingdisabled = "enabled";
         editinggroup = [];
         window.location.reload();
         //errormessage = response.data.message;
@@ -146,41 +156,30 @@
     }
   };
 
-  const handleToken = async () => {
+  const handleCheckAdmin = async () => {
     try {
       const response = await axios({
         method: "post",
-        url: "http://localhost:3000/api/v1/auth/authenticate",
+        url: "http://localhost:3000/api/v1/auth/admin",
         withCredentials: true
       });
       return response;
     } catch (error) {
       //console.error("Error during authentication:", error.response || error.message);
-      console.log("user not authorized");
+      console.log("user is not an Admin");
+      goto("/");
     }
   };
 
   afterUpdate(async () => {
     console.log("After update has been called");
-    const data = await handleToken();
-    //console.log(data);
-    if (data) {
-      if (data.status === 200) {
-        if (data.data.message !== "Authorized admin") {
-          goto("/");
-        }
-      } else {
-        goto("/");
-      }
-    } else {
-      goto("/");
-    }
+    await handleCheckAdmin();
   });
 
   let newusername;
   let newpassword;
   let newemail;
-  let newdisabled = false;
+  let newdisabled = "enabled";
   let newgroup = [];
 
   let createnewgroup = "";
@@ -188,7 +187,7 @@
   let editingusername = "";
   let editingpassword;
   let editingemail;
-  let editingdisabled = false;
+  let editingdisabled = "enabled";
   let editinggroup = [];
   let originaleditinggroup = [];
 
@@ -218,12 +217,65 @@
     </thead>
     <tbody>
       {#each data.userdata.data as user}
-        <tr>
-          {#if user.username === editingusername}
-            {#if editingusername === "admin"}
-              <td>{editingusername}</td>
-              <td><input type="text" bind:value={editingemail} /></td>
-              <td><input type="password" bind:value={editingpassword} /></td>
+        {#if user.username !== "-"}
+          <tr>
+            {#if user.username === editingusername}
+              {#if editingusername === "admin"}
+                <td>{editingusername}</td>
+                <td><input type="text" bind:value={editingemail} /></td>
+                <td><input type="password" bind:value={editingpassword} /></td>
+                <td>
+                  <ul>
+                    {#each data.usergroupdata.data as usergroup}
+                      {#if usergroup.username === user.username}
+                        <li>{usergroup.groupname}</li>
+                      {/if}
+                    {/each}
+                  </ul>
+                </td>
+                <td>
+                  {#if user.disabled === 0}
+                    <p>Enabled</p>
+                  {:else}
+                    <p>Disabled</p>
+                  {/if}
+                </td>
+                <td
+                  ><button on:click={handleUpdateUser}>Save</button>
+
+                  <button
+                    on:click={() => {
+                      editingusername = "";
+                    }}>Cancel</button
+                  ></td
+                >
+              {:else}
+                <td>{editingusername}</td>
+                <td><input type="text" bind:value={editingemail} /></td>
+                <td><input type="password" bind:value={editingpassword} /></td>
+                <td>
+                  <MultiSelect options={data.groupdata.data.map(item => item.groupname)} placeholder="Select Groups" bind:value={editinggroup} selected={originaleditinggroup} style="width: 200px;" />
+                </td>
+                <td>
+                  <select bind:value={editingdisabled}>
+                    <option value="enabled">Enabled</option>
+                    <option value="disabled">Disabled</option>
+                  </select>
+                </td>
+                <td
+                  ><button on:click={handleUpdateUser}>Save</button>
+
+                  <button
+                    on:click={() => {
+                      editingusername = "";
+                    }}>Cancel</button
+                  ></td
+                >
+              {/if}
+            {:else}
+              <td>{user.username}</td>
+              <td>{user.email}</td>
+              <td>********</td>
               <td>
                 <ul>
                   {#each data.usergroupdata.data as usergroup}
@@ -240,58 +292,10 @@
                   <p>Disabled</p>
                 {/if}
               </td>
-              <td
-                ><button on:click={handleUpdateUser}>Save</button>
-
-                <button
-                  on:click={() => {
-                    editingusername = "";
-                  }}>Cancel</button
-                ></td
-              >
-            {:else}
-              <td>{editingusername}</td>
-              <td><input type="text" bind:value={editingemail} /></td>
-              <td><input type="password" bind:value={editingpassword} /></td>
-              <td>
-                <MultiSelect options={data.groupdata.data.map(item => item.groupname)} placeholder="Select Groups" bind:value={editinggroup} selected={originaleditinggroup} style="width: 200px;" />
-              </td>
-              <td>
-                <input type="checkbox" bind:checked={editingdisabled} />Disabled?
-              </td>
-              <td
-                ><button on:click={handleUpdateUser}>Save</button>
-
-                <button
-                  on:click={() => {
-                    editingusername = "";
-                  }}>Cancel</button
-                ></td
-              >
+              <td><button on:click={setEditingUser(user)}>Edit</button> </td>
             {/if}
-          {:else}
-            <td>{user.username}</td>
-            <td>{user.email}</td>
-            <td>********</td>
-            <td>
-              <ul>
-                {#each data.usergroupdata.data as usergroup}
-                  {#if usergroup.username === user.username}
-                    <li>{usergroup.groupname}</li>
-                  {/if}
-                {/each}
-              </ul>
-            </td>
-            <td>
-              {#if user.disabled === 0}
-                <p>Enabled</p>
-              {:else}
-                <p>Disabled</p>
-              {/if}
-            </td>
-            <td><button on:click={setEditingUser(user)}>Edit</button> </td>
-          {/if}
-        </tr>
+          </tr>
+        {/if}
       {/each}
 
       <tr>
@@ -302,7 +306,10 @@
           <MultiSelect options={data.groupdata.data.map(item => item.groupname)} placeholder="Select Groups" bind:value={newgroup} style="width: 200px;" />
         </td>
         <td>
-          <input type="checkbox" bind:checked={newdisabled} />Disabled?
+          <select bind:value={newdisabled}>
+            <option value="enabled">Enabled</option>
+            <option value="disabled">Disabled</option>
+          </select>
         </td>
         <td>
           <form on:submit={handleCreateNewUser}>
@@ -315,31 +322,6 @@
 {:else}
   <p>No data</p>
 {/if}
-
-<!-- <select bind:value={newgroup} multiple>
-  <option>NIL</option>
-  {#each data.groupdata.data as group}
-    <option>{group.groupname}</option>
-  {/each}
-</select> -->
-<!-- <MultiSelect id="languages" options={data.groupdata.data} placeholder="What languages do you know?" selected={[]}>
-  <LanguageSlot let:option {option} slot="selected" />
-  <LanguageSlot let:option {option} slot="option" />
-</MultiSelect> -->
-
-<!-- <form>
-  <label for="fruits">Choose fruits:</label>
-  <select id="fruits" name="fruits" multiple>
-      <option value="apple">Apple</option>
-      <option value="banana">Banana</option>
-      <option value="cherry">Cherry</option>
-      <option value="date">Date</option>
-      <option value="elderberry">Elderberry</option>
-  </select>
-
-  <br><br>
-  <input type="submit" value="Submit">
-</form> -->
 
 <style>
   table {
@@ -354,14 +336,5 @@
   }
   th {
     background-color: #f2f2f2;
-  }
-  .multi-select {
-    border: 1px solid #ccc;
-    border-radius: 4px;
-    padding: 5px;
-    width: 200px; /* Specify the desired width here */
-    max-height: 150px;
-    overflow-y: auto;
-    position: relative;
   }
 </style>

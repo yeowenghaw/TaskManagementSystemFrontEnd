@@ -39,7 +39,7 @@
     try {
       const response = await axios({
         method: "post",
-        url: "http://localhost:3000/api/v1/auth/authenticate",
+        url: "http://localhost:3000/api/v1/auth/user",
         withCredentials: true
       });
       return response;

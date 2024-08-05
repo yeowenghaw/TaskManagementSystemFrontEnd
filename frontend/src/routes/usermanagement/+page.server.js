@@ -1,6 +1,5 @@
 import { redirect } from "@sveltejs/kit";
 import axios from "axios";
-import { decodeToken, extractToken } from "../../lib/utility/jwttoken.js";
 
 export async function load({ cookies }) {
   // const sessionid = cookies.get('sessionid');
@@ -46,7 +45,7 @@ export async function load({ cookies }) {
     // return groupresponse.data;
     return { userdata, groupdata, usergroupdata };
   } catch (error) {
-    //console.log("error fetching user data", error);
+    console.log("error fetching user data", error);
     return {};
     // return {
     //   props: {
