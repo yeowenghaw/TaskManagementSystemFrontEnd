@@ -49,7 +49,7 @@
       authorization.isuser = true;
     } catch (error) {
       //console.log($page.url.pathname);
-      if ($page.url.pathname !== "/login" && authorization.isuser) {
+      if ($page.url.pathname !== "/login") {
         console.log("Failed to authorize user, logging out");
         console.log(error);
         await handleLogout();
@@ -73,7 +73,7 @@
 
   onMount(async () => {
     // Your code here, this will run once the component is mounted
-    console.log("on mount is called!");
+    console.log("lay out on mount is called!");
     checkPermissions();
   });
 </script>

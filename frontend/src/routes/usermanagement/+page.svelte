@@ -3,12 +3,16 @@
   import axios from "axios";
   import MultiSelect from "svelte-multiselect";
   import { goto } from "$app/navigation";
-  import { afterUpdate } from "svelte";
+  import { onMount } from "svelte";
 
   // Reactive statement for debugging and handling token
   $: {
-    console.log("value of editingdisabled: " + editingdisabled);
+    //console.log("value of editingdisabled: " + editingdisabled);
   }
+
+  const checkPermissions = async () => {
+    await handleCheckAdmin();
+  };
 
   const setEditingUser = edituser => {
     editingusername = edituser.username;
@@ -171,9 +175,10 @@
     }
   };
 
-  afterUpdate(async () => {
-    console.log("After update has been called");
-    await handleCheckAdmin();
+  onMount(async () => {
+    // Your code here, this will run once the component is mounted
+    console.log("usermanagement on mount is called!");
+    checkPermissions();
   });
 
   let newusername;

@@ -64,7 +64,7 @@
 
   onMount(async () => {
     // Your code here, this will run once the component is mounted
-    console.log("on mount is called!");
+    console.log("log in on mount is called!");
     await handleToken();
   });
 </script>
