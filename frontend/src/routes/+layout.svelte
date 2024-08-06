@@ -1,10 +1,18 @@
 <script>
-  import { afterUpdate } from "svelte";
   import { onMount } from "svelte";
   import axios from "axios";
   import { goto } from "$app/navigation";
-  let isloggedin = true;
-  let isadmin = false;
+  import { page } from "$app/stores";
+
+  let authorization = {
+    isuser: false,
+    isadmin: false
+  };
+
+  const checkPermissions = async () => {
+    await handleCheckUser();
+    await handleCheckAdmin();
+  };
 
   $: {
   }
@@ -24,8 +32,8 @@
     } catch (error) {
       console.error("Error during logout:", error.response || error.message);
     }
-    isloggedin = false;
-    isadmin = false;
+    authorization.isuser = false;
+    authorization.isadmin = false;
     goto("/login");
   };
 
@@ -38,13 +46,15 @@
         url: "http://localhost:3000/api/v1/auth/user",
         withCredentials: true
       });
-      isloggedin = true;
+      authorization.isuser = true;
     } catch (error) {
-      if (isloggedin) {
+      //console.log($page.url.pathname);
+      if ($page.url.pathname !== "/login" && authorization.isuser) {
         console.log("Failed to authorize user, logging out");
         console.log(error);
         await handleLogout();
       }
+      authorization.isuser = false;
     }
   };
 
@@ -55,39 +65,29 @@
         url: "http://localhost:3000/api/v1/auth/admin",
         withCredentials: true
       });
-      isadmin = true;
-      //console.log("user is an Admin");
+      authorization.isadmin = true;
     } catch (error) {
-      //console.error("Error during authentication:", error.response || error.message);
-      //console.log("user is not an Admin");
-      isadmin = false;
+      authorization.isadmin = false;
     }
   };
-
-  afterUpdate(async () => {
-    console.log("After update has been called");
-    await handleCheckUser();
-    await handleCheckAdmin();
-  });
 
   onMount(async () => {
     // Your code here, this will run once the component is mounted
     console.log("on mount is called!");
-    await handleCheckUser();
-    await handleCheckAdmin();
+    checkPermissions();
   });
 </script>
 
 <div class="navbar">
-  {#if isloggedin === true}
+  {#if authorization.isuser === true}
     <a href="/" data-sveltekit-reload>Home</a>
   {:else}
     <a href="/login" data-sveltekit-reload>Home</a>
   {/if}
 
-  {#if isloggedin === true}
+  {#if authorization.isuser === true}
     <a href="/profile" data-sveltekit-reload>Profile</a>
-    {#if isadmin === true}
+    {#if authorization.isadmin === true}
       <a href="/usermanagement" data-sveltekit-reload>UserManagement</a>
     {/if}
     <div class="right">
@@ -95,6 +95,7 @@
     </div>
   {/if}
 </div>
+
 <slot />
 
 <style>

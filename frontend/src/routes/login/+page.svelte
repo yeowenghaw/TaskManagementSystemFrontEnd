@@ -2,6 +2,7 @@
   import axios from "axios";
   import { goto } from "$app/navigation";
   import { afterUpdate } from "svelte";
+  import { onMount } from "svelte";
 
   let username = "";
   let password = "";
@@ -23,7 +24,7 @@
         withCredentials: true
       });
 
-      console.log(response);
+      //console.log(response);
       success = true;
     } catch (error) {
       errormessage = error.response.data.message;
@@ -31,7 +32,7 @@
     }
     // redirection is done over here because redirecting will trigger the catch error block,
     if (success) {
-      goto("/"); // Redirect to home or desired route
+      window.location.reload();
     }
   };
 
@@ -42,23 +43,29 @@
         url: "http://localhost:3000/api/v1/auth/user",
         withCredentials: true
       });
-      return response;
+      goto("/");
     } catch (error) {
       //console.error("Error during authentication:", error.response || error.message);
-      console.log("user not authorized");
+      //console.log("user not authorized");
     }
   };
 
   afterUpdate(async () => {
-    console.log("After update has been called");
-    const data = await handleToken();
-    //console.log(data);
-    if (data) {
-      if (data.status === 200) {
-        goto("/");
-      }
-    } else {
-    }
+    // console.log("After update has been called");
+    // const data = await handleToken();
+    // //console.log(data);
+    // if (data) {
+    //   if (data.status === 200) {
+    //     goto("/");
+    //   }
+    // } else {
+    // }
+  });
+
+  onMount(async () => {
+    // Your code here, this will run once the component is mounted
+    console.log("on mount is called!");
+    await handleToken();
   });
 </script>
 
