@@ -39,7 +39,7 @@
   const handleToken = async () => {
     try {
       const response = await axios({
-        method: "post",
+        method: "get",
         url: "http://localhost:3000/api/v1/auth/user",
         withCredentials: true
       });

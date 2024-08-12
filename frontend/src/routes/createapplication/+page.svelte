@@ -2,9 +2,23 @@
   import { onMount } from "svelte";
   import { goto } from "$app/navigation";
   import axios from "axios";
+  export let data;
   let authorization = {
     isprojectlead: false
   };
+
+  let errormessage = "";
+
+  let app_acronym = "";
+  let app_description = "";
+  let app_rnumber = "";
+  let app_startdate = "";
+  let app_enddate = "";
+  let app_permit_create = "";
+  let app_permit_open = "";
+  let app_permit_todolist = "";
+  let app_permit_doing = "";
+  let app_permit_done = "";
 
   const checkPermissions = async () => {
     await handleCheckProjectLead();
@@ -15,7 +29,7 @@
     try {
       //console.log("making axios post");
       const response = await axios({
-        method: "post",
+        method: "get",
         url: "http://localhost:3000/api/v1/auth/projectlead",
         withCredentials: true
       });
@@ -30,99 +44,144 @@
   onMount(async () => {
     console.log("create application page mounted!");
     checkPermissions();
+    //console.log(data.groupdata.data);
   });
-  let acronym = "";
-  let description = "";
-  let rnumber = "";
-  let startDate = "";
-  let endDate = "";
-  let permitCreate = "";
-  let permitOpen = "";
-  let permitToDo = "";
-  let permitDoing = "";
-  let permitDone = "";
 
-  function handleSubmit() {
+  const handleCreateNewApp = async event => {
     // Handle form submission logic
     console.log({
-      acronym,
-      description,
-      rnumber,
-      startDate,
-      endDate,
-      permitCreate,
-      permitOpen,
-      permitToDo,
-      permitDoing,
-      permitDone
+      app_acronym,
+      app_description,
+      app_rnumber,
+      app_startdate,
+      app_enddate,
+      app_permit_create,
+      app_permit_open,
+      app_permit_todolist,
+      app_permit_doing,
+      app_permit_done
     });
-  }
+
+    try {
+      //console.log("making axios post");
+      const response = await axios({
+        method: "post",
+        url: "http://localhost:3000/api/v1/app",
+        data: {
+          app_acronym: app_acronym,
+          app_description: app_description,
+          app_rnumber: app_rnumber,
+          app_startdate: app_startdate,
+          app_enddate: app_enddate,
+          app_permit_create: app_permit_create,
+          app_permit_open: app_permit_open,
+          app_permit_todolist: app_permit_todolist,
+          app_permit_doing: app_permit_doing,
+          app_permit_done: app_permit_done
+        },
+        withCredentials: true
+      });
+      //console.log(response);
+      //errormessage = response.message;
+      if (response.status === 200) {
+        errormessage = response.data.message;
+        // reset fields
+        app_acronym = "";
+        app_description = "";
+        app_rnumber = "";
+        app_startdate = "";
+        app_enddate = "";
+        app_permit_create = "";
+        app_permit_open = "";
+        app_permit_todolist = "";
+        app_permit_doing = "";
+        app_permit_done = "";
+      }
+    } catch (error) {
+      //console.log(error);
+      errormessage = error.response.data.message;
+    }
+  };
 </script>
 
 <br />
 <div>
-  <button class="createapp-button" on:click={() => history.back()}>Back</button>
+  <button class="createapp-button" on:click={() => goto("/")}>Back</button>
 </div>
+
+{#if errormessage.length > 0}
+  <h2>{errormessage}</h2>
+{/if}
 <div class="applications">
   <h1>Create Application</h1>
-  <form on:submit|preventDefault={handleSubmit}>
+  <form on:submit|preventDefault={handleCreateNewApp}>
     <div class="form-container">
       <div class="left-column">
         <div class="form-group">
-          <p>Acronym:</p>
-          <input class="createapp-input" type="text" bind:value={acronym} placeholder="Application 4" />
+          <p>app_acronym:</p>
+          <input class="createapp-input" type="text" bind:value={app_acronym} placeholder="application name" />
         </div>
         <div class="form-group">
-          <p>Description:</p>
-          <textarea class="createapp-textarea" bind:value={description} placeholder="Text Area"></textarea>
+          <p>app_description:</p>
+          <textarea class="createapp-textarea" bind:value={app_description} placeholder="description here"></textarea>
         </div>
         <div class="form-group">
-          <p>Rnumber:</p>
-          <input class="createapp-input" type="number" bind:value={rnumber} placeholder="Number Field" />
+          <p>app_rnumber:</p>
+          <input class="createapp-input" type="number" bind:value={app_rnumber} placeholder="Number Field" />
         </div>
         <div class="form-group">
           <p>Start Date:</p>
-          <input class="createapp-input" type="date" bind:value={startDate} />
+          <input class="createapp-input" type="date" bind:value={app_startdate} />
         </div>
         <div class="form-group">
           <p>End Date:</p>
-          <input class="createapp-input" type="date" bind:value={endDate} />
+          <input class="createapp-input" type="date" bind:value={app_enddate} />
         </div>
       </div>
       <div class="right-column">
         <div class="form-group">
           <p>Permit_Create:</p>
-          <select class="createapp-select" bind:value={permitCreate}>
-            <option>Select Group</option>
-            <!-- Add other options here -->
+          <select class="createapp-select" bind:value={app_permit_create}>
+            <option></option>
+            {#each data.groupdata.data.map(item => item.groupname) as group}
+              <option>{group}</option>
+            {/each}
           </select>
         </div>
         <div class="form-group">
           <p>Permit_Open:</p>
-          <select class="createapp-select" bind:value={permitOpen}>
-            <option>Select Group</option>
-            <!-- Add other options here -->
+          <select class="createapp-select" bind:value={app_permit_open}>
+            <option></option>
+            {#each data.groupdata.data.map(item => item.groupname) as group}
+              <option>{group}</option>
+            {/each}
           </select>
         </div>
         <div class="form-group">
           <p>Permit_ToDo:</p>
-          <select class="createapp-select" bind:value={permitToDo}>
-            <option>Select Group</option>
-            <!-- Add other options here -->
+          <select class="createapp-select" bind:value={app_permit_todolist}>
+            <option></option>
+            {#each data.groupdata.data.map(item => item.groupname) as group}
+              <option>{group}</option>
+            {/each}
           </select>
         </div>
         <div class="form-group">
           <p>Permit_Doing:</p>
-          <select class="createapp-select" bind:value={permitDoing}>
-            <option>Select Group</option>
-            <!-- Add other options here -->
+          <select class="createapp-select" bind:value={app_permit_doing}>
+            <option></option>
+            {#each data.groupdata.data.map(item => item.groupname) as group}
+              <option>{group}</option>
+            {/each}
           </select>
         </div>
         <div class="form-group">
           <p>Permit_Done:</p>
-          <select class="createapp-select" bind:value={permitDone}>
-            <option>Select Group</option>
-            <!-- Add other options here -->
+          <select class="createapp-select" bind:value={app_permit_done}>
+            <option></option>
+            {#each data.groupdata.data.map(item => item.groupname) as group}
+              <option>{group}</option>
+            {/each}
           </select>
         </div>
       </div>

@@ -5,18 +5,18 @@ export async function load({ cookies }) {
   const token = cookies.get("token");
 
   try {
-    const applicationresponse = await axios({
+    const groupresponse = await axios({
       method: "get",
-      url: `http://localhost:3000/api/v1/allapps`,
+      url: `http://localhost:3000/api/v1/groups`,
       headers: {
         Cookie: token
       },
       withCredentials: true
     });
 
-    const applicationdata = applicationresponse.data;
+    const groupdata = groupresponse.data;
 
-    return { applicationdata };
+    return { groupdata };
   } catch (error) {
     console.log("error fetching user data", error);
     return {};

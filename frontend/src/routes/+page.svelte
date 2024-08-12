@@ -2,8 +2,10 @@
   import { onMount } from "svelte";
   import axios from "axios";
   import { goto } from "$app/navigation";
+  export let data;
+
   let authorization = {
-    isprojectlead: false
+    isprojectlead: true
   };
 
   const checkPermissions = async () => {
@@ -15,7 +17,7 @@
     try {
       //console.log("making axios post");
       const response = await axios({
-        method: "post",
+        method: "get",
         url: "http://localhost:3000/api/v1/auth/projectlead",
         withCredentials: true
       });
@@ -24,6 +26,10 @@
       console.log(error);
       authorization.isprojectlead = false;
     }
+  };
+
+  const editApplication = async applicationname => {
+    goto("/editapplication/" + applicationname);
   };
 
   $: {
@@ -38,7 +44,8 @@
 
   onMount(async () => {
     console.log("main page mounted!");
-    checkPermissions();
+    //checkPermissions();
+    //console.log(data.applicationdata.data);
   });
 </script>
 
@@ -52,30 +59,12 @@
     }}>Create Application</button
   >
   <div class="container">
-    <div class="box">
-      <button class="box-button">Name 1</button>
-      <button class="edit-button">Edit</button>
-    </div>
-    <div class="box">
-      <button class="box-button">Name 2</button>
-      <button class="edit-button">Edit</button>
-    </div>
-    <div class="box">
-      <button class="box-button">Name 3</button>
-      <button class="edit-button">Edit</button>
-    </div>
-    <div class="box">
-      <button class="box-button">Name 4</button>
-      <button class="edit-button">Edit</button>
-    </div>
-    <div class="box">
-      <button class="box-button">Name 5</button>
-      <button class="edit-button">Edit</button>
-    </div>
-    <div class="box">
-      <button class="box-button">Name 6</button>
-      <button class="edit-button">Edit</button>
-    </div>
+    {#each data.applicationdata.data as applications}
+      <div class="box">
+        <button class="box-button" on:click={() => goto("/application/" + applications.app_acronym)}>{applications.app_acronym}</button>
+        <button class="edit-button" on:click={() => goto("/editapplication/" + applications.app_acronym)}>Edit</button>
+      </div>
+    {/each}
   </div>
 </div>
 

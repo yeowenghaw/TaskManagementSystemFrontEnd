@@ -6,9 +6,7 @@
   import { onMount } from "svelte";
 
   // Reactive statement for debugging and handling token
-  $: {
-    //console.log("value of editingdisabled: " + editingdisabled);
-  }
+  $: {}
 
   const checkPermissions = async () => {
     await handleCheckAdmin();
@@ -163,7 +161,7 @@
   const handleCheckAdmin = async () => {
     try {
       const response = await axios({
-        method: "post",
+        method: "get",
         url: "http://localhost:3000/api/v1/auth/admin",
         withCredentials: true
       });

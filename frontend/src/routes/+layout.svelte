@@ -5,8 +5,8 @@
   import { page } from "$app/stores";
 
   let authorization = {
-    isuser: false,
-    isadmin: false
+    isuser: true,
+    isadmin: true
   };
 
   const checkPermissions = async () => {
@@ -42,7 +42,7 @@
     try {
       console.log("making axios post");
       const response = await axios({
-        method: "post",
+        method: "get",
         url: "http://localhost:3000/api/v1/auth/user",
         withCredentials: true
       });
@@ -61,7 +61,7 @@
   const handleCheckAdmin = async () => {
     try {
       const response = await axios({
-        method: "post",
+        method: "get",
         url: "http://localhost:3000/api/v1/auth/admin",
         withCredentials: true
       });
