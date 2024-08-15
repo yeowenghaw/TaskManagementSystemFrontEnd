@@ -2,12 +2,11 @@
   import { onMount } from "svelte";
   import { goto } from "$app/navigation";
   import axios from "axios";
-  export let data;
-  let authorization = {
-    isprojectlead: false
-  };
 
   let errormessage = "";
+  let groupdata;
+  let usergroup;
+  let usergroupdata;
 
   let app_acronym = "";
   let app_description = "";
@@ -19,33 +18,6 @@
   let app_permit_todolist = "";
   let app_permit_doing = "";
   let app_permit_done = "";
-
-  const checkPermissions = async () => {
-    await handleCheckProjectLead();
-  };
-
-  const handleCheckProjectLead = async () => {
-    //console.log("checking user...");
-    try {
-      //console.log("making axios post");
-      const response = await axios({
-        method: "get",
-        url: "http://localhost:3000/api/v1/auth/projectlead",
-        withCredentials: true
-      });
-      authorization.isprojectlead = true;
-    } catch (error) {
-      console.log(error);
-      authorization.isprojectlead = false;
-      goto("/");
-    }
-  };
-
-  onMount(async () => {
-    console.log("create application page mounted!");
-    checkPermissions();
-    //console.log(data.groupdata.data);
-  });
 
   const handleCreateNewApp = async event => {
     // Handle form submission logic
@@ -96,12 +68,47 @@
         app_permit_todolist = "";
         app_permit_doing = "";
         app_permit_done = "";
+        goto("/");
       }
     } catch (error) {
       //console.log(error);
       errormessage = error.response.data.message;
     }
   };
+
+  const getData = async () => {
+    try {
+      const groupresponse = await axios({
+        method: "get",
+        url: `http://localhost:3000/api/v1/groups`,
+        withCredentials: true
+      });
+
+      const usergroupresponse = await axios({
+        method: "get",
+        url: `http://localhost:3000/api/v1/auth/group`,
+        withCredentials: true
+      });
+
+      ///auth/group
+      usergroupdata = usergroupresponse.data;
+      usergroup = usergroupdata.data.map(item => item.groupname);
+
+      groupdata = groupresponse.data.data.map(item => item.groupname);
+    } catch (error) {
+      console.log("error fetching user data", error);
+      return {};
+    }
+  };
+
+  onMount(async () => {
+    console.log("create application page mounted!");
+    await getData();
+    console.log(groupdata);
+    if (!usergroup.includes("projectlead")) {
+      goto("/");
+    }
+  });
 </script>
 
 <br />
@@ -112,85 +119,89 @@
 {#if errormessage.length > 0}
   <h2>{errormessage}</h2>
 {/if}
-<div class="applications">
-  <h1>Create Application</h1>
-  <form on:submit|preventDefault={handleCreateNewApp}>
-    <div class="form-container">
-      <div class="left-column">
-        <div class="form-group">
-          <p>app_acronym:</p>
-          <input class="createapp-input" type="text" bind:value={app_acronym} placeholder="application name" />
+{#if groupdata && usergroup}
+  <div class="applications">
+    <h1>Create Application</h1>
+    <form on:submit|preventDefault={handleCreateNewApp}>
+      <div class="form-container">
+        <div class="left-column">
+          <div class="form-group">
+            <p>app_acronym:</p>
+            <input class="createapp-input" type="text" bind:value={app_acronym} placeholder="application name" />
+          </div>
+          <div class="form-group">
+            <p>app_description:</p>
+            <textarea class="createapp-textarea" bind:value={app_description} placeholder="description here"></textarea>
+          </div>
+          <div class="form-group">
+            <p>app_rnumber:</p>
+            <input class="createapp-input" type="number" bind:value={app_rnumber} placeholder="Number Field" />
+          </div>
+          <div class="form-group">
+            <p>Start Date:</p>
+            <input class="createapp-input" type="date" bind:value={app_startdate} />
+          </div>
+          <div class="form-group">
+            <p>End Date:</p>
+            <input class="createapp-input" type="date" bind:value={app_enddate} />
+          </div>
         </div>
-        <div class="form-group">
-          <p>app_description:</p>
-          <textarea class="createapp-textarea" bind:value={app_description} placeholder="description here"></textarea>
-        </div>
-        <div class="form-group">
-          <p>app_rnumber:</p>
-          <input class="createapp-input" type="number" bind:value={app_rnumber} placeholder="Number Field" />
-        </div>
-        <div class="form-group">
-          <p>Start Date:</p>
-          <input class="createapp-input" type="date" bind:value={app_startdate} />
-        </div>
-        <div class="form-group">
-          <p>End Date:</p>
-          <input class="createapp-input" type="date" bind:value={app_enddate} />
+        <div class="right-column">
+          <div class="form-group">
+            <p>Permit_Create:</p>
+            <select class="createapp-select" bind:value={app_permit_create}>
+              <option></option>
+              {#each groupdata as group}
+                <option>{group}</option>
+              {/each}
+            </select>
+          </div>
+          <div class="form-group">
+            <p>Permit_Open:</p>
+            <select class="createapp-select" bind:value={app_permit_open}>
+              <option></option>
+              {#each groupdata as group}
+                <option>{group}</option>
+              {/each}
+            </select>
+          </div>
+          <div class="form-group">
+            <p>Permit_ToDo:</p>
+            <select class="createapp-select" bind:value={app_permit_todolist}>
+              <option></option>
+              {#each groupdata as group}
+                <option>{group}</option>
+              {/each}
+            </select>
+          </div>
+          <div class="form-group">
+            <p>Permit_Doing:</p>
+            <select class="createapp-select" bind:value={app_permit_doing}>
+              <option></option>
+              {#each groupdata as group}
+                <option>{group}</option>
+              {/each}
+            </select>
+          </div>
+          <div class="form-group">
+            <p>Permit_Done:</p>
+            <select class="createapp-select" bind:value={app_permit_done}>
+              <option></option>
+              {#each groupdata as group}
+                <option>{group}</option>
+              {/each}
+            </select>
+          </div>
         </div>
       </div>
-      <div class="right-column">
-        <div class="form-group">
-          <p>Permit_Create:</p>
-          <select class="createapp-select" bind:value={app_permit_create}>
-            <option></option>
-            {#each data.groupdata.data.map(item => item.groupname) as group}
-              <option>{group}</option>
-            {/each}
-          </select>
-        </div>
-        <div class="form-group">
-          <p>Permit_Open:</p>
-          <select class="createapp-select" bind:value={app_permit_open}>
-            <option></option>
-            {#each data.groupdata.data.map(item => item.groupname) as group}
-              <option>{group}</option>
-            {/each}
-          </select>
-        </div>
-        <div class="form-group">
-          <p>Permit_ToDo:</p>
-          <select class="createapp-select" bind:value={app_permit_todolist}>
-            <option></option>
-            {#each data.groupdata.data.map(item => item.groupname) as group}
-              <option>{group}</option>
-            {/each}
-          </select>
-        </div>
-        <div class="form-group">
-          <p>Permit_Doing:</p>
-          <select class="createapp-select" bind:value={app_permit_doing}>
-            <option></option>
-            {#each data.groupdata.data.map(item => item.groupname) as group}
-              <option>{group}</option>
-            {/each}
-          </select>
-        </div>
-        <div class="form-group">
-          <p>Permit_Done:</p>
-          <select class="createapp-select" bind:value={app_permit_done}>
-            <option></option>
-            {#each data.groupdata.data.map(item => item.groupname) as group}
-              <option>{group}</option>
-            {/each}
-          </select>
-        </div>
+      <div class="button-container">
+        <button class="createapp-button" type="submit">Submit</button>
       </div>
-    </div>
-    <div class="button-container">
-      <button class="createapp-button" type="submit">Submit</button>
-    </div>
-  </form>
-</div>
+    </form>
+  </div>
+{:else}
+  <p>...loading</p>
+{/if}
 
 <style>
   .applications {
@@ -246,5 +257,9 @@
     font-size: 16px; /* Adjust font size */
     border-radius: 5px; /* Add border radius */
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2); /* Add shadow for button */
+  }
+
+  textarea {
+    resize: none;
   }
 </style>

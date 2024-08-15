@@ -1,14 +1,8 @@
 <script>
   import axios from "axios";
-
-  export let data;
-
   import { onMount } from "svelte";
 
-  onMount(() => {
-    console.log("Page has been navigated to!");
-  });
-
+  let userdata;
   let uservalue = "";
   let emailvalue = "";
   let editing = false;
@@ -16,18 +10,6 @@
   let temporaryemail = "";
   let temporarypassword = "";
   let errormessage = "";
-
-  // Reactive statement for debugging and handling token
-  $: {
-    //console.log("console log of data: " + data.data);
-    if (data.data) {
-      uservalue = data.data[0].username;
-      emailvalue = data.data[0].email;
-    } else {
-      console.log("Could not retrieve user data");
-    }
-    //console.log(data);
-  }
 
   // Function to handle form submission
   const handleProfileUpdate = async event => {
@@ -51,27 +33,8 @@
       //console.log(response);
       errormessage = response.data.message;
     } catch (error) {
-      //console.log(error);
-      // unauthorised error log out user and redirect to login page
       if (error.response.status === "401") {
-        try {
-          const response = await axios({
-            method: "post",
-            url: "http://localhost:3000/api/v1/logout",
-            withCredentials: true
-          });
-
-          console.log(response);
-
-          if (response.status === 200) {
-            // Check for successful response status
-            goto("/login"); // Use relative path for better consistency
-          } else {
-            console.error("Logout failed:", response.status, response.statusText);
-          }
-        } catch (error) {
-          console.error("Error during logout:", error.response || error.message);
-        }
+        console.log(error);
       }
       errormessage = error.response.data.message;
     }
@@ -82,12 +45,28 @@
     editing = true;
     temporaryemail = emailvalue;
   };
+
+  const getData = async () => {
+    const response = await axios({
+      method: "get",
+      url: `http://localhost:3000/api/v1/users/user`,
+      withCredentials: true
+    });
+    userdata = response.data;
+    uservalue = response.data.data[0].username;
+    emailvalue = response.data.data[0].email;
+  };
+
+  onMount(async () => {
+    console.log("Page has been navigated to!");
+    await getData();
+  });
 </script>
 
 {#if errormessage.length > 0}
   <h2>{errormessage}</h2>
 {/if}
-{#if data}
+{#if userdata}
   <div class="profile">
     <div class="profile-container">
       <h2>{uservalue}'s Profile</h2>
@@ -115,6 +94,8 @@
       {/if}
     </div>
   </div>
+{:else}
+  <p>loading...</p>
 {/if}
 
 <style>

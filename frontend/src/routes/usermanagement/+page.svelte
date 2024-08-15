@@ -1,16 +1,12 @@
 <script>
-  export let data;
   import axios from "axios";
   import MultiSelect from "svelte-multiselect";
   import { goto } from "$app/navigation";
   import { onMount } from "svelte";
 
   // Reactive statement for debugging and handling token
-  $: {}
-
-  const checkPermissions = async () => {
-    await handleCheckAdmin();
-  };
+  $: {
+  }
 
   const setEditingUser = edituser => {
     editingusername = edituser.username;
@@ -23,7 +19,7 @@
       editingdisabled = "enabled";
     }
     originaleditinggroup = [];
-    data.usergroupdata.data.forEach(element => {
+    usergrouptabledata.data.forEach(element => {
       if (editingusername === element.username) {
         originaleditinggroup.push(element.groupname);
       }
@@ -158,26 +154,51 @@
     }
   };
 
-  const handleCheckAdmin = async () => {
-    try {
-      const response = await axios({
-        method: "get",
-        url: "http://localhost:3000/api/v1/auth/admin",
-        withCredentials: true
-      });
-      return response;
-    } catch (error) {
-      //console.error("Error during authentication:", error.response || error.message);
-      console.log("user is not an Admin");
-      goto("/");
-    }
+  const getData = async () => {
+    const usergroupresponse = await axios({
+      method: "get",
+      url: `http://localhost:3000/api/v1/auth/group`,
+      withCredentials: true
+    });
+
+    const response = await axios({
+      method: "get",
+      url: `http://localhost:3000/api/v1/users`,
+      withCredentials: true
+    });
+
+    const usergrouptableresponse = await axios({
+      method: "get",
+      url: `http://localhost:3000/api/v1/groups/usergroups`,
+      withCredentials: true
+    });
+
+    const groupresponse = await axios({
+      method: "get",
+      url: `http://localhost:3000/api/v1/groups`,
+      withCredentials: true
+    });
+
+    userdata = response.data;
+    groupdata = groupresponse.data;
+    usergrouptabledata = usergrouptableresponse.data;
+
+    usergroupdata = usergroupresponse.data;
+    usergroup = usergroupdata.data.map(item => item.groupname);
   };
 
   onMount(async () => {
     // Your code here, this will run once the component is mounted
     console.log("usermanagement on mount is called!");
-    checkPermissions();
+    await getData();
   });
+
+  let usergroup;
+  let usergroupdata;
+
+  let usergrouptabledata;
+  let groupdata;
+  let userdata;
 
   let newusername;
   let newpassword;
@@ -202,7 +223,7 @@
 {/if}
 
 <h1>User Management</h1>
-{#if data.userdata || data.usergroupdata}
+{#if userdata && usergrouptabledata && groupdata}
   <form>
     <input type="text" bind:value={createnewgroup} />
     <button on:click={handleCreateGroup}>Create Group</button>
@@ -219,7 +240,7 @@
       </tr>
     </thead>
     <tbody>
-      {#each data.userdata.data as user}
+      {#each userdata.data as user}
         {#if user.username !== "-"}
           <tr>
             {#if user.username === editingusername}
@@ -229,7 +250,7 @@
                 <td><input type="password" bind:value={editingpassword} /></td>
                 <td>
                   <ul>
-                    {#each data.usergroupdata.data as usergroup}
+                    {#each usergrouptabledata.data as usergroup}
                       {#if usergroup.username === user.username}
                         <li>{usergroup.groupname}</li>
                       {/if}
@@ -257,7 +278,7 @@
                 <td><input type="text" bind:value={editingemail} /></td>
                 <td><input type="password" bind:value={editingpassword} /></td>
                 <td>
-                  <MultiSelect options={data.groupdata.data.map(item => item.groupname)} placeholder="Select Groups" bind:value={editinggroup} selected={originaleditinggroup} style="width: 200px;" />
+                  <MultiSelect options={groupdata.data.map(item => item.groupname)} placeholder="Select Groups" bind:value={editinggroup} selected={originaleditinggroup} style="width: 200px;" />
                 </td>
                 <td>
                   <select bind:value={editingdisabled}>
@@ -281,7 +302,7 @@
               <td>********</td>
               <td>
                 <ul>
-                  {#each data.usergroupdata.data as usergroup}
+                  {#each usergrouptabledata.data as usergroup}
                     {#if usergroup.username === user.username}
                       <li>{usergroup.groupname}</li>
                     {/if}
@@ -306,7 +327,7 @@
         <td><input type="text" bind:value={newemail} /></td>
         <td><input type="password" bind:value={newpassword} /></td>
         <td>
-          <MultiSelect options={data.groupdata.data.map(item => item.groupname)} placeholder="Select Groups" bind:value={newgroup} style="width: 200px;" />
+          <MultiSelect options={groupdata.data.map(item => item.groupname)} placeholder="Select Groups" bind:value={newgroup} style="width: 200px;" />
         </td>
         <td>
           <select bind:value={newdisabled}>
@@ -323,7 +344,7 @@
     </tbody>
   </table>
 {:else}
-  <p>No data</p>
+  <p>loading...</p>
 {/if}
 
 <style>

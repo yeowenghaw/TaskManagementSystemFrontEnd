@@ -4,18 +4,9 @@
   import { goto } from "$app/navigation";
   import { page } from "$app/stores";
 
-  let authorization = {
-    isuser: true,
-    isadmin: true
-  };
-
-  const checkPermissions = async () => {
-    await handleCheckUser();
-    await handleCheckAdmin();
-  };
-
-  $: {
-  }
+  let usergroup;
+  let usergroupdata;
+  let isloggedin;
 
   const handleLogout = async () => {
     try {
@@ -32,69 +23,79 @@
     } catch (error) {
       console.error("Error during logout:", error.response || error.message);
     }
-    authorization.isuser = false;
-    authorization.isadmin = false;
+    window.location.reload();
     goto("/login");
   };
 
-  const handleCheckUser = async () => {
-    console.log("checking user...");
+  const getData = async () => {
+    console.log("checking valid user...");
     try {
-      console.log("making axios post");
-      const response = await axios({
+      const userresponse = await axios({
         method: "get",
-        url: "http://localhost:3000/api/v1/auth/user",
+        url: `http://localhost:3000/api/v1/auth/user`,
+        data: {
+          app_acronym: "random application",
+          randomdata: "random data"
+        },
         withCredentials: true
       });
-      authorization.isuser = true;
-    } catch (error) {
-      //console.log($page.url.pathname);
-      if ($page.url.pathname !== "/login") {
-        console.log("Failed to authorize user, logging out");
-        console.log(error);
-        await handleLogout();
-      }
-      authorization.isuser = false;
-    }
-  };
 
-  const handleCheckAdmin = async () => {
-    try {
-      const response = await axios({
+      console.log("checking user belong to what group...");
+      const usergroupresponse = await axios({
         method: "get",
-        url: "http://localhost:3000/api/v1/auth/admin",
+        url: `http://localhost:3000/api/v1/auth/group`,
         withCredentials: true
       });
-      authorization.isadmin = true;
+
+      ///auth/group
+
+      usergroupdata = usergroupresponse.data;
+      usergroup = usergroupdata.data.map(item => item.groupname);
+
+      if (userresponse.status === 200) {
+        isloggedin = true;
+      }
     } catch (error) {
-      authorization.isadmin = false;
+      if (error.status !== 200) {
+        isloggedin = false;
+      }
     }
+    // isloggedin = userresponse.response.status;
+    // console.log(userresponse);
   };
 
   onMount(async () => {
     // Your code here, this will run once the component is mounted
     console.log("lay out on mount is called!");
-    checkPermissions();
+    //checkPermissions();
+    await getData();
+    // console.log("isloggedin is: " + isloggedin);
+    // console.log("$page.url.pathname is: " + $page.url.pathname);
+    if (isloggedin === false && $page.url.pathname !== "/login") {
+      goto("/login");
+    }
   });
 </script>
 
-<div class="navbar">
-  {#if authorization.isuser === true}
-    <a href="/" data-sveltekit-reload>Home</a>
-  {:else}
-    <a href="/login" data-sveltekit-reload>Home</a>
-  {/if}
-
-  {#if authorization.isuser === true}
-    <a href="/profile" data-sveltekit-reload>Profile</a>
-    {#if authorization.isadmin === true}
-      <a href="/usermanagement" data-sveltekit-reload>UserManagement</a>
+{#if usergroupdata}
+  <div class="navbar">
+    {#if true}
+      <a href="/" data-sveltekit-reload>Home</a>
+    {:else}
+      <a href="/login" data-sveltekit-reload>Home</a>
     {/if}
-    <div class="right">
-      <button on:click={handleLogout} class="nav-button" navigating>Log Out</button>
-    </div>
-  {/if}
-</div>
+
+    {#if true}
+      <a href="/profile" data-sveltekit-reload>Profile</a>
+      {#if usergroup.includes("admin")}
+        <a href="/usermanagement" data-sveltekit-reload>UserManagement</a>
+      {/if}
+      <div class="right">
+        <button on:click={handleLogout} class="nav-button" navigating>Log Out</button>
+      </div>
+    {/if}
+  </div>
+{/if}
 
 <slot />
 

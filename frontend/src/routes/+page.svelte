@@ -2,71 +2,64 @@
   import { onMount } from "svelte";
   import axios from "axios";
   import { goto } from "$app/navigation";
-  export let data;
 
-  let authorization = {
-    isprojectlead: true
+  let usergroup;
+  let usergroupdata;
+  let applicationdata;
+
+  const getData = async () => {
+    const applicationresponse = await axios({
+      method: "get",
+      url: `http://localhost:3000/api/v1/allapps`,
+      withCredentials: true
+    });
+
+    applicationdata = applicationresponse.data;
+
+    const usergroupresponse = await axios({
+      method: "get",
+      url: `http://localhost:3000/api/v1/auth/group`,
+      withCredentials: true
+    });
+
+    ///auth/group
+    usergroupdata = usergroupresponse.data;
+    usergroup = usergroupdata.data.map(item => item.groupname);
   };
-
-  const checkPermissions = async () => {
-    await handleCheckProjectLead();
-  };
-
-  const handleCheckProjectLead = async () => {
-    //console.log("checking user...");
-    try {
-      //console.log("making axios post");
-      const response = await axios({
-        method: "get",
-        url: "http://localhost:3000/api/v1/auth/projectlead",
-        withCredentials: true
-      });
-      authorization.isprojectlead = true;
-    } catch (error) {
-      console.log(error);
-      authorization.isprojectlead = false;
-    }
-  };
-
-  const editApplication = async applicationname => {
-    goto("/editapplication/" + applicationname);
-  };
-
-  $: {
-    // authorization.isuser;
-    // authorization.isadmin;
-    // authorization.isprojectlead;
-    // authorization.isprojectmanager;
-    // //authorization;
-    // //console.log(authorization);
-    // //setContext("authorization", authorization);
-  }
 
   onMount(async () => {
-    console.log("main page mounted!");
-    //checkPermissions();
-    //console.log(data.applicationdata.data);
+    await getData();
+    console.log(usergroup);
+    console.log("user group includes project lead is: " + usergroup.includes("projectlead"));
   });
 </script>
 
 <h1>Main Page</h1>
-<p>The user is project lead: {authorization.isprojectlead}</p>
-<div class="applications">
-  <button
-    class="create-button"
-    on:click={() => {
-      goto("/createapplication");
-    }}>Create Application</button
-  >
-  <div class="container">
-    {#each data.applicationdata.data as applications}
-      <div class="box">
-        <button class="box-button" on:click={() => goto("/application/" + applications.app_acronym)}>{applications.app_acronym}</button>
-        <button class="edit-button" on:click={() => goto("/editapplication/" + applications.app_acronym)}>Edit</button>
-      </div>
-    {/each}
+
+{#if usergroupdata}
+  <div class="applications">
+    {#if usergroup.includes("projectlead")}
+      <button
+        class="create-button"
+        on:click={() => {
+          goto("/createapplication");
+        }}>Create Application</button
+      >
+    {/if}
+    <div class="container">
+      {#each applicationdata.data as applications}
+        <div class="box">
+          <button class="box-button" on:click={() => goto("/application/" + applications.app_acronym)}>{applications.app_acronym}</button>
+          {#if usergroup.includes("projectlead")}
+            <button class="edit-button" on:click={() => goto("/edit/" + applications.app_acronym)}>Edit</button>
+          {/if}
+        </div>
+      {/each}
+    </div>
   </div>
-</div>
+{:else}
+  ...loading
+{/if}
 
 <style>
   .applications {

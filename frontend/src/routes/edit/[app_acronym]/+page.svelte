@@ -1,11 +1,13 @@
 <script>
   import { onMount } from "svelte";
   import { goto } from "$app/navigation";
+  import { page } from "$app/stores";
   import axios from "axios";
-  export let data;
-  let authorization = {
-    isprojectlead: false
-  };
+
+  let groupdata;
+  let appdata;
+  let usergroup;
+  let usergroupdata;
 
   let errormessage = "";
 
@@ -17,32 +19,6 @@
   let app_permit_todolist = "";
   let app_permit_doing = "";
   let app_permit_done = "";
-
-  const checkPermissions = async () => {
-    await handleCheckProjectLead();
-    if (data.appdata) {
-      initialiseValues();
-    } else {
-      goto("/");
-    }
-  };
-
-  const handleCheckProjectLead = async () => {
-    //console.log("checking user...");
-    try {
-      //console.log("making axios post");
-      const response = await axios({
-        method: "get",
-        url: "http://localhost:3000/api/v1/auth/projectlead",
-        withCredentials: true
-      });
-      authorization.isprojectlead = true;
-    } catch (error) {
-      console.log(error);
-      authorization.isprojectlead = false;
-      goto("/");
-    }
-  };
 
   function formatDate(dateString) {
     // Parse the date string to a Date object
@@ -60,22 +36,15 @@
   }
 
   const initialiseValues = async () => {
-    app_description = data.appdata.data[0].app_description;
-    app_startdate = formatDate(data.appdata.data[0].app_startdate);
-    app_enddate = formatDate(data.appdata.data[0].app_enddate);
-    app_permit_create = data.appdata.data[0].app_permit_create;
-    app_permit_open = data.appdata.data[0].app_permit_open;
-    app_permit_todolist = data.appdata.data[0].app_permit_todolist;
-    app_permit_doing = data.appdata.data[0].app_permit_doing;
-    app_permit_done = data.appdata.data[0].app_permit_done;
+    app_description = appdata.app_description;
+    app_startdate = formatDate(appdata.app_startdate);
+    app_enddate = formatDate(appdata.app_enddate);
+    app_permit_create = appdata.app_permit_create;
+    app_permit_open = appdata.app_permit_open;
+    app_permit_todolist = appdata.app_permit_todolist;
+    app_permit_doing = appdata.app_permit_doing;
+    app_permit_done = appdata.app_permit_done;
   };
-
-  onMount(async () => {
-    console.log("create application page mounted!");
-    checkPermissions();
-    // console.log(data.groupdata.data);
-    // console.log(data.appdata.data[0]);
-  });
 
   const handleUpdateApp = async event => {
     // Handle form submission logic
@@ -96,7 +65,7 @@
         method: "put",
         url: "http://localhost:3000/api/v1/app",
         data: {
-          app_acronym: data.appdata.data[0].app_acronym,
+          app_acronym: appdata.app_acronym,
           app_description: app_description,
           app_startdate: app_startdate,
           app_enddate: app_enddate,
@@ -119,6 +88,53 @@
       errormessage = error.response.data.message;
     }
   };
+
+  const getData = async () => {
+    console.log("checking valid user...");
+    const applicationname = $page.params.app_acronym;
+    // console.log("applicationname " + applicationname);
+    try {
+      const groupresponse = await axios({
+        method: "get",
+        url: "http://localhost:3000/api/v1/groups",
+        withCredentials: true
+      });
+
+      const appresponse = await axios({
+        method: "get",
+        url: "http://localhost:3000/api/v1/app",
+        headers: {
+          "app-acronym": applicationname
+        },
+        withCredentials: true
+      });
+
+      const usergroupresponse = await axios({
+        method: "get",
+        url: `http://localhost:3000/api/v1/auth/group`,
+        withCredentials: true
+      });
+
+      ///auth/group
+      usergroupdata = usergroupresponse.data;
+      usergroup = usergroupdata.data.map(item => item.groupname);
+
+      groupdata = groupresponse.data.data.map(item => item.groupname);
+      appdata = appresponse.data.data[0];
+    } catch (error) {
+      console.log(error);
+    }
+  };
+
+  onMount(async () => {
+    console.log("create application page mounted!");
+    await getData();
+    initialiseValues();
+    console.log(usergroup);
+    if (!usergroup.includes("projectlead")) {
+      goto("/");
+    }
+  });
 </script>
 
 <br />
@@ -130,15 +146,15 @@
   <h2>{errormessage}</h2>
 {/if}
 
-{#if data.appdata && data.groupdata.data}
+{#if appdata && groupdata}
   <div class="applications">
-    <h1>Editing {data.appdata.data[0].app_acronym}</h1>
+    <h1>Editing {appdata.app_acronym}</h1>
     <form on:submit|preventDefault={handleUpdateApp}>
       <div class="form-container">
         <div class="left-column">
           <div class="form-group">
             <p>app_acronym:</p>
-            <p>{data.appdata.data[0].app_acronym}</p>
+            <p>{appdata.app_acronym}</p>
           </div>
           <div class="form-group">
             <p>app_description:</p>
@@ -146,7 +162,7 @@
           </div>
           <div class="form-group">
             <p>app_rnumber:</p>
-            <p>{data.appdata.data[0].app_rnumber}</p>
+            <p>{appdata.app_rnumber}</p>
           </div>
           <div class="form-group">
             <p>Start Date:</p>
@@ -162,7 +178,7 @@
             <p>Permit_Create:</p>
             <select class="createapp-select" bind:value={app_permit_create}>
               <option></option>
-              {#each data.groupdata.data.map(item => item.groupname) as group}
+              {#each groupdata as group}
                 <option>{group}</option>
               {/each}
             </select>
@@ -171,7 +187,7 @@
             <p>Permit_Open:</p>
             <select class="createapp-select" bind:value={app_permit_open}>
               <option></option>
-              {#each data.groupdata.data.map(item => item.groupname) as group}
+              {#each groupdata as group}
                 <option>{group}</option>
               {/each}
             </select>
@@ -180,7 +196,7 @@
             <p>Permit_ToDo:</p>
             <select class="createapp-select" bind:value={app_permit_todolist}>
               <option></option>
-              {#each data.groupdata.data.map(item => item.groupname) as group}
+              {#each groupdata as group}
                 <option>{group}</option>
               {/each}
             </select>
@@ -189,7 +205,7 @@
             <p>Permit_Doing:</p>
             <select class="createapp-select" bind:value={app_permit_doing}>
               <option></option>
-              {#each data.groupdata.data.map(item => item.groupname) as group}
+              {#each groupdata as group}
                 <option>{group}</option>
               {/each}
             </select>
@@ -198,7 +214,7 @@
             <p>Permit_Done:</p>
             <select class="createapp-select" bind:value={app_permit_done}>
               <option></option>
-              {#each data.groupdata.data.map(item => item.groupname) as group}
+              {#each groupdata as group}
                 <option>{group}</option>
               {/each}
             </select>
@@ -266,5 +282,8 @@
     font-size: 16px; /* Adjust font size */
     border-radius: 5px; /* Add border radius */
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2); /* Add shadow for button */
+  }
+  textarea {
+    resize: none;
   }
 </style>

@@ -2,52 +2,114 @@
   import { onMount } from "svelte";
   import { page } from "$app/stores";
   import { goto } from "$app/navigation";
-  export let data;
+  import axios from "axios";
 
-  let tasks = [
-    { id: 1, status: "Open", name: "Task 1", description: "Description 1", plan: "Plan 1" },
-    { id: 2, status: "To Do", name: "Task 2", description: "Description 2", plan: "Plan 2" },
-    { id: 3, status: "Doing", name: "Task 3", description: "Description 3", plan: "Plan 3" },
-    { id: 4, status: "Done", name: "Task 4", description: "Description 4", plan: "Plan 4" },
-    { id: 5, status: "Closed", name: "Task 5", description: "Description 5", plan: "Plan 5" }
-  ];
+  const columns = ["open", "todo", "doing", "done", "closed"];
+  let alltaskdata;
+  let usergroup;
+  let applicationname;
+  let appdata;
 
-  const columns = ["Open", "To Do", "Doing", "Done", "Closed"];
+  const getData = async () => {
+    applicationname = $page.params.app_acronym;
+    try {
+      const alltaskresponse = await axios({
+        method: "get",
+        url: `http://localhost:3000/api/v1/alltasks`,
+        headers: {
+          "app-acronym": applicationname
+        },
+        withCredentials: true
+      });
+
+      const usergroupresponse = await axios({
+        method: "get",
+        url: `http://localhost:3000/api/v1/auth/group`,
+        withCredentials: true
+      });
+
+      const appresponse = await axios({
+        method: "get",
+        url: "http://localhost:3000/api/v1/app",
+        headers: {
+          "app-acronym": applicationname
+        },
+        withCredentials: true
+      });
+
+      appdata = appresponse.data.data[0];
+      usergroup = usergroupresponse.data.data.map(item => item.groupname);
+      alltaskdata = alltaskresponse.data.data;
+    } catch (error) {
+      console.log("error fetching user data", error);
+      return {};
+    }
+  };
 
   onMount(async () => {
     console.log("create task page mounted!");
-    // console.log(data);
-    console.log($page.url.pathname);
+    await getData();
+    console.log(usergroup);
+    console.log(alltaskdata);
   });
 </script>
 
-<div>
-  <h1>Tasks for {data.app_acronym}</h1>
-  <div class="create-task">
+{#if alltaskdata && applicationname && usergroup && appdata}
+  <div>
+    <h1>Tasks for {applicationname}</h1>
     <button
       on:click={() => {
-        goto($page.url.pathname + "/createtask");
-      }}>+ Create Task</button
+        goto("/");
+      }}>Back</button
     >
-  </div>
-  <div class="board">
-    {#each columns as column}
-      <div class="column">
-        <h2>{column}</h2>
-        {#each tasks.filter(task => task.status === column) as task}
-          <div class="task">
-            <p>{task.name}</p>
-            <p>{task.description}</p>
-            <p>{task.plan}</p>
-            {#if column === "Done"}
-              <button>Review Task</button>
-            {/if}
-          </div>
-        {/each}
+
+    {#if usergroup.includes("projectmanager")}
+      <div class="create-task">
+        <button
+          on:click={() => {
+            goto($page.url.pathname + "/plans");
+          }}>Plans</button
+        >
       </div>
-    {/each}
+    {/if}
+    {#if usergroup.includes(appdata.app_permit_create)}
+      <div class="create-task">
+        <button
+          on:click={() => {
+            goto($page.url.pathname + "/createtask");
+          }}>+ Create Task</button
+        >
+      </div>
+    {/if}
+    <div class="board">
+      {#each columns as column}
+        <div class="column">
+          <h2>{column}</h2>
+          {#each alltaskdata.filter(task => task.task_state === column) as task}
+            <div class="task">
+              <button on:click={() => goto($page.url.pathname + "/viewtask/" + task.task_id)}>
+                <p>Name: {task.task_name}</p>
+                <div class="notes-content">
+                  <p>{task.task_description}</p>
+                </div>
+                <!-- <p>Description: {task.task_description}</p> -->
+                {#if task.task_plan}
+                  <p>Plan: {task.task_plan}</p>
+                {:else}
+                  <p>Plan: None</p>
+                {/if}
+
+                {#if column === "Done"}
+                  <button>Review Task</button>
+                {/if}
+              </button>
+            </div>
+          {/each}
+        </div>
+      {/each}
+    </div>
   </div>
-</div>
+{/if}
 
 <style>
   .board {
@@ -62,14 +124,24 @@
     box-sizing: border-box;
   }
   .task {
-    border: 1px solid #000;
-    margin: 10px 0;
-    padding: 10px;
+    display: flex;
+    flex-direction: column;
+    margin-bottom: 10px;
+    width: 100%; /* Ensure task takes full width of the container */
   }
   .create-task {
     display: flex;
     justify-content: flex-end;
     margin-bottom: 20px;
+  }
+
+  .task button {
+    width: 100%; /* Make the button fill the entire width */
+    text-align: left; /* If you want text inside the button aligned to the left */
+    display: flex;
+    flex-direction: column; /* Aligns text vertically in the button */
+    align-items: flex-start; /* Aligns the content to the left */
+    padding: 10px; /* Ensure there's padding inside the button */
   }
   button {
     padding: 10px 20px;
@@ -80,5 +152,16 @@
   }
   button:hover {
     background-color: #0056b3;
+  }
+
+  .notes-content {
+    overflow-y: auto;
+    border: 1px solid #ccc;
+    padding: 5px;
+    flex-grow: 1; /* Allows .notes-content to expand and fill available space */
+    margin-bottom: 10px;
+    height: 100px; /* Set the width to 100% to match the task width */
+    width: 100%; /* Set the width to 100% to match the task width */
+    box-sizing: border-box; /* Include padding and border in the element's width and height */
   }
 </style>
