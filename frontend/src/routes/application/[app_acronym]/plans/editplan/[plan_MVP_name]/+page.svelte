@@ -80,6 +80,11 @@
   onMount(async () => {
     console.log("plan page mounted!");
     await getData();
+    if (!usergroup.includes("projectmanager")) {
+      const previouspath = currentpath.substring(0, currentpath.lastIndexOf("/"));
+      const previouspreviouspath = previouspath.substring(0, previouspath.lastIndexOf("/"));
+      goto(previouspreviouspath);
+    }
     // console.log(usergroup);
     // console.log(applicationname);
     // console.log(currentpath);
@@ -106,15 +111,15 @@
 
     <div class="form">
       <div class="form-group">
-        <label>Plan MVP Name</label>
+        <h2>Plan MVP Name</h2>
         {planMvpName}
       </div>
       <div class="form-group">
-        <label>Plan Start Date</label>
+        <h2>Plan Start Date</h2>
         <input type="date" bind:value={plan_startDate} />
       </div>
       <div class="form-group">
-        <label>Plan End Date</label>
+        <h2>Plan End Date</h2>
         <input type="date" bind:value={plan_endDate} />
       </div>
       <div>
@@ -163,12 +168,6 @@
     margin-right: 20px;
   }
 
-  .form-group label {
-    font-weight: bold;
-    margin-bottom: 5px;
-  }
-
-  input[type="text"],
   input[type="date"] {
     padding: 5px;
     border: 1px solid #ccc;

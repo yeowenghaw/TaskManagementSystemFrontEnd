@@ -88,13 +88,17 @@
           {#each alltaskdata.filter(task => task.task_state === column) as task}
             <div class="task">
               <button on:click={() => goto($page.url.pathname + "/viewtask/" + task.task_id)}>
-                <p>Name: {task.task_name}</p>
                 <div class="notes-content">
+                  <p>Name: {task.task_name}</p>
+                </div>
+                <div class="notes-content">
+                  <p>Description:</p>
                   <p>{task.task_description}</p>
                 </div>
-                <!-- <p>Description: {task.task_description}</p> -->
                 {#if task.task_plan}
-                  <p>Plan: {task.task_plan}</p>
+                  <div class="notes-content">
+                    <p>Plan: {task.task_plan}</p>
+                  </div>
                 {:else}
                   <p>Plan: None</p>
                 {/if}

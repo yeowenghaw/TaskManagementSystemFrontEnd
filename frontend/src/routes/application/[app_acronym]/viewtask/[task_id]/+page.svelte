@@ -19,6 +19,8 @@
   let newdescription = "";
   let newnote = "";
   let newplan;
+  let requesttimeextension = false;
+  let oldplan;
 
   function formatDate(dateString) {
     // Parse the date string to a Date object
@@ -62,7 +64,14 @@
         errormessage = response.data.message;
         // reset fields
         newnote = "";
-        window.location.reload();
+        // check if new state exist, then go back to home page
+        if (newstate) {
+          const previouspath = currentpath.substring(0, currentpath.lastIndexOf("/"));
+          const previouspreviouspath = previouspath.substring(0, previouspath.lastIndexOf("/"));
+          goto(previouspreviouspath);
+        } else {
+          window.location.reload();
+        }
       }
     } catch (error) {
       errormessage = error.response.data.message;
@@ -115,6 +124,7 @@
       usergroup = usergroupresponse.data.data.map(item => item.groupname);
       newdescription = taskdata.task_description;
       newplan = taskdata.task_plan;
+      oldplan = taskdata.task_plan;
     } catch (error) {
       console.log("error fetching data");
       console.log(error);
@@ -124,6 +134,7 @@
 
   onMount(async () => {
     await getData();
+    console.log("taskdata.task_state: " + taskdata.task_state);
   });
 
   let errormessage = "";
@@ -134,7 +145,8 @@
 {/if}
 {#if taskdata && appdata && tasknotedata && plans}
   <div class="task-details-container">
-    <button class="createapp-button"
+    <button
+      class="createapp-button"
       on:click={() => {
         const previouspath = currentpath.substring(0, currentpath.lastIndexOf("/"));
         const previouspreviouspath = previouspath.substring(0, previouspath.lastIndexOf("/"));
@@ -144,6 +156,7 @@
     <h1>{taskdata.task_name}</h1>
     <div class="task-details">
       <div class="task-info">
+        <p><strong>Task Name:</strong> {taskdata.task_name}</p>
         <p><strong>Description:</strong></p>
         <div class="add-note">
           {#if (taskdata.task_state === "open" && usergroup.includes(appdata.app_permit_open)) || (taskdata.task_state === "done" && usergroup.includes(appdata.app_permit_done))}
@@ -181,13 +194,26 @@
         <div class="notes-content">
           {#each tasknotedata as tasknotes}
             <p>{@html tasknotes.notes.replace(/\n/g, "<br>")}</p>
+            <p>################</p>
           {/each}
         </div>
+
         {#if (taskdata.task_state === "open" && usergroup.includes(appdata.app_permit_open)) || (taskdata.task_state === "todo" && usergroup.includes(appdata.app_permit_todolist)) || (taskdata.task_state === "doing" && usergroup.includes(appdata.app_permit_doing)) || (taskdata.task_state === "done" && usergroup.includes(appdata.app_permit_done))}
           <div class="add-note">
             <label for="new-note"><strong>Enter New Note:</strong></label>
-            <textarea id="new-note" placeholder="Update Details..." bind:value={newnote}></textarea>
+            {#if requesttimeextension}
+              <textarea id="new-note" placeholder="Update Details..." bind:value={newnote} disabled></textarea>
+            {:else}
+              <textarea id="new-note" placeholder="Update Details..." bind:value={newnote}></textarea>
+            {/if}
           </div>
+        {/if}
+
+        {#if taskdata.task_state === "doing"}
+          <input type="checkbox" bind:checked={requesttimeextension} />Request for Time Extension
+          <!-- <input type="checkbox" id="request-extension" name="request_extension" value="yes" required />
+            requesting for extension to the deadline
+        </input> -->
         {/if}
       </div>
     </div>
@@ -201,14 +227,35 @@
         <button class="take-task" on:click={() => handleUpdateTask("doing")}>Take on Task</button>
         <button class="take-task" on:click={() => handleUpdateTask()}>Update</button>
       {:else if taskdata.task_state === "doing" && usergroup.includes(appdata.app_permit_doing)}
-        <button class="take-task" on:click={() => handleUpdateTask("done")}>Submit Task</button>
-        <button class="cancel" on:click={() => handleUpdateTask("todo")}>Give Up Task</button>
-        <button class="take-task" on:click={() => handleUpdateTask()}>Update</button>
+        {#if requesttimeextension}
+          <button
+            class="take-task"
+            on:click={() => {
+              //newnote = "Request For Time Extension! " + newnote;
+              newnote = newnote + "\nRequest For Time Extension!";
+              handleUpdateTask("done");
+            }}>Request Time Extension</button
+          >
+        {:else}
+          <button class="take-task" on:click={() => handleUpdateTask("done")}>Submit Task</button>
+          <button class="cancel" on:click={() => handleUpdateTask("todo")}>Give Up Task</button>
+          <button class="take-task" on:click={() => handleUpdateTask()}>Update</button>
+        {/if}
       {:else if taskdata.task_state === "done" && usergroup.includes(appdata.app_permit_done)}
-        <button class="take-task" on:click={() => handleUpdateTask("closed")}>Accept Task</button>
+        {#if newplan === oldplan}
+          <button class="take-task" on:click={() => handleUpdateTask("closed")}>Accept Task</button>
+          <button class="take-task" on:click={() => handleUpdateTask()}>Update</button>
+        {/if}
         <button class="cancel" on:click={() => handleUpdateTask("doing")}>Reject Task</button>
-        <button class="take-task" on:click={() => handleUpdateTask()}>Update</button>
       {/if}
+      <button
+        class="cancel"
+        on:click={() => {
+          const previouspath = currentpath.substring(0, currentpath.lastIndexOf("/"));
+          const previouspreviouspath = previouspath.substring(0, previouspath.lastIndexOf("/"));
+          goto(previouspreviouspath);
+        }}>Cancel</button
+      >
       <!-- <button class="take-task">Take On Task</button> && usergroup.includes(appdata.app_permit_create)}
       <button class="update-details">Update Details</button>
       {#if taskdata.task_state === "open"}

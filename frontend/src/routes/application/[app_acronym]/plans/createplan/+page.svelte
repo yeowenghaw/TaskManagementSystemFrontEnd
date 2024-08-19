@@ -71,6 +71,10 @@
   onMount(async () => {
     console.log("plan page mounted!");
     await getData();
+    if (!usergroup.includes("projectmanager")) {
+      const previouspath = currentpath.substring(0, currentpath.lastIndexOf("/"));
+      goto(previouspath);
+    }
     console.log(usergroup);
     console.log(applicationname);
     console.log(currentpath);
